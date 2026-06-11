@@ -1,73 +1,42 @@
-# React + TypeScript + Vite
+# 🌡️ Termômetro de Conversão ao Vivo
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Mede a "temperatura" da plateia durante uma apresentação ao vivo de produto digital (live, webinar, lançamento) e projeta uma faixa de conversão em tempo real a partir dos comentários do chat.
 
-Currently, two official plugins are available:
+## Como funciona
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. **Classificação dos comentários** — cada mensagem do chat é classificada em uma de 8 categorias de intenção:
 
-## React Compiler
+   | Categoria | Peso no score |
+   |---|---|
+   | Compra iminente | +1.0 |
+   | Interesse alto | +0.6 |
+   | Pergunta técnica | +0.35 |
+   | Dúvida neutra | +0.1 |
+   | Hype vazio | +0.05 |
+   | Ruído | 0.0 |
+   | Objeção: confiança | −0.45 |
+   | Objeção: preço | −0.5 |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+   A classificação pode ser feita por **heurística local** (regex/palavras-chave, funciona offline) ou por **IA** (API da Anthropic).
 
-## Expanding the ESLint configuration
+2. **Projeção de conversão** — o score médio ponderado dos comentários é mapeado para uma taxa de intenção dentro do chat, corrigido pelo viés de amostra (quem comenta é mais engajado que a audiência total) e convertido em estimativa de vendas com margem de incerteza de ±25%, além do faturamento projetado contra a meta.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+3. **Sugestões de ajuste de discurso** — conforme a distribuição das categorias, o app sugere ações em tempo real (ex.: muita objeção de preço → ancorar valor, mostrar ROI, reforçar parcelamento e garantia).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Rodando localmente
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Abra http://localhost:5173 no navegador.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Stack
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+- [Vite](https://vite.dev/) + [React 19](https://react.dev/) + TypeScript
+- Sem dependências de UI — estilos inline/CSS embutido
+
+## ⚠️ Sobre a classificação por IA
+
+A função `classificarIA` chama a API da Anthropic. Para usar fora de um ambiente sandbox, configure a `ANTHROPIC_API_KEY` em um **backend** e faça proxy da chamada — **nunca exponha a key no front-end**. Sem isso, use a classificação por heurística (`classificarHeuristica`), que funciona 100% local.
